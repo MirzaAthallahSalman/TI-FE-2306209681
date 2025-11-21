@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: travel-flight-fe
-          image: mirza601/travel-flight-be:REPLACE_ME_TAG
+          image: mirza601/travel-flight-fe:REPLACE_ME_TAG
           ports:
             - containerPort: 80
           resources:
