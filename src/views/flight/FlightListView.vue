@@ -439,7 +439,7 @@ const calculateDuration = (departure: string, arrival: string): string => {
   return `${hours}h ${minutes}m`
 }
 
-const formatDateTime = (datetime: string): string => {
+const formatDateTime = (datetime?: string): string => {
   if (!datetime) return '-'
   const date = new Date(datetime)
   return date.toLocaleString('id-ID', {
