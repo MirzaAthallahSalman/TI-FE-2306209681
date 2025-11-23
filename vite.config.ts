@@ -10,9 +10,23 @@ export default defineConfig({
     vue(),
     vueDevTools(),
   ],
+
+  base: '/',
+
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    cssCodeSplit: false,
+    rollupOptions: {
+      output: {
+        manualChunks: undefined
+      }
+    }
+  }
 })
