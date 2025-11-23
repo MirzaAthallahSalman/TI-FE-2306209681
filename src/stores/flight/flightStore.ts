@@ -11,7 +11,7 @@ import type {
   RoundTripParams
 } from '@/interfaces/flight.interface'
 
-const API_URL = import.meta.env.VITE_API_BASE_URL
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api'
 
 export const useFlightStore = defineStore('flight', () => {
   const flights = ref<FlightResponse[]>([])
@@ -25,7 +25,7 @@ export const useFlightStore = defineStore('flight', () => {
     error.value = null
     try {
       const response = await axios.post<FlightResponse>(
-        `${API_URL}/flights`,
+        `${API_BASE_URL}/flights`,
         request
       )
       await fetchFlights() // Refresh list
@@ -43,7 +43,7 @@ export const useFlightStore = defineStore('flight', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.get<FlightResponse[]>(`${API_URL}/flights`)
+      const response = await axios.get<FlightResponse[]>(`${API_BASE_URL}/flights`)
       flights.value = response.data
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to fetch flights'
@@ -59,7 +59,7 @@ export const useFlightStore = defineStore('flight', () => {
     error.value = null
     try {
       const response = await axios.get<FlightDetailResponse>(
-        `${API_URL}/flights/${id}`
+        `${API_BASE_URL}/flights/${id}`
       )
       currentFlight.value = response.data
       return response.data
@@ -77,7 +77,7 @@ export const useFlightStore = defineStore('flight', () => {
     error.value = null
     try {
       const response = await axios.get<FlightDetailResponse>(
-        `${API_URL}/flights/${id}/update`
+        `${API_BASE_URL}/flights/${id}/update`
       )
       currentFlight.value = response.data
       return response.data
@@ -95,7 +95,7 @@ export const useFlightStore = defineStore('flight', () => {
     error.value = null
     try {
       const response = await axios.get<FlightResponse[]>(
-        `${API_URL}/flights/search`,
+        `${API_BASE_URL}/flights/search`,
         { params }
       )
       flights.value = response.data
@@ -113,7 +113,7 @@ export const useFlightStore = defineStore('flight', () => {
     error.value = null
     try {
       const response = await axios.get<FlightResponse[]>(
-        `${API_URL}/flights/round-trip`,
+        `${API_BASE_URL}/flights/round-trip`,
         { params }
       )
       flights.value = response.data
@@ -134,7 +134,7 @@ export const useFlightStore = defineStore('flight', () => {
     error.value = null
     try {
       const response = await axios.put<FlightResponse>(
-        `${API_URL}/flights/${id}/update`,
+        `${API_BASE_URL}/flights/${id}/update`,
         request
       )
       await fetchFlights() // Refresh list
@@ -152,7 +152,7 @@ export const useFlightStore = defineStore('flight', () => {
     loading.value = true
     error.value = null
     try {
-      await axios.delete(`${API_URL}/flights/${id}`)
+      await axios.delete(`${API_BASE_URL}/flights/${id}`)
       await fetchFlights() // Refresh list
     } catch (err: any) {
       error.value = err.response?.data?.error || err.response?.data?.message || 'Failed to cancel flight'

@@ -369,8 +369,8 @@ const loadAirplanes = async () => {
 
 const loadAirports = async () => {
   try {
-    const API_URL = import.meta.env.VITE_API_BASE_URL
-    const response = await axios.get(`${API_URL}/airports`)
+    const API_BASE_URL = 'http://localhost:8081/api'
+    const response = await axios.get(`${API_BASE_URL}/airports`)
     airports.value = response.data
   } catch (error) {
     console.error('Error loading airports:', error)

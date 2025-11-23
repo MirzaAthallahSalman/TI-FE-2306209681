@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import axios from 'axios'
 import type { Airline } from '@/interfaces/airline.interface'
 
-const API_URL = import.meta.env.VITE_API_BASE_URL
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api'
 
 export const useAirlineStore = defineStore('airline', () => {
   const airlines = ref<Airline[]>([])
@@ -15,7 +15,7 @@ export const useAirlineStore = defineStore('airline', () => {
       // airlines.value = response.data.data
 
       // ✅ AFTER (tanpa BaseResponse):
-      const response = await axios.get<Airline[]>(`${API_URL}/airlines`)
+      const response = await axios.get<Airline[]>(`${API_BASE_URL}/airlines`)
       airlines.value = response.data // ← Langsung ambil response.data
 
     } catch (err) {

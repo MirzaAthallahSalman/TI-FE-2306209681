@@ -12,7 +12,7 @@ import type {
   BookingStatistics
 } from '@/interfaces/booking.interface'
 
-const API_URL = import.meta.env.VITE_API_BASE_URL
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api'
 
 export const useBookingStore = defineStore('booking', () => {
   const bookings = ref<BookingResponse[]>([])
@@ -27,7 +27,7 @@ export const useBookingStore = defineStore('booking', () => {
     error.value = null
     try {
       const response = await axios.post<BookingResponse>(
-        `${API_URL}/bookings`,
+        `${API_BASE_URL}/bookings`,
         request
       )
       await fetchBookings() // Refresh list
@@ -48,7 +48,7 @@ export const useBookingStore = defineStore('booking', () => {
     error.value = null
     try {
       const response = await axios.post<TwoWayBookingResponse>(
-        `${API_URL}/bookings/two-way`,
+        `${API_BASE_URL}/bookings/two-way`,
         request
       )
       await fetchBookings() // Refresh list
@@ -66,7 +66,7 @@ export const useBookingStore = defineStore('booking', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.get<BookingResponse[]>(`${API_URL}/bookings`)
+      const response = await axios.get<BookingResponse[]>(`${API_BASE_URL}/bookings`)
       bookings.value = response.data
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to fetch bookings'
@@ -82,7 +82,7 @@ export const useBookingStore = defineStore('booking', () => {
     error.value = null
     try {
       const response = await axios.get<BookingResponse>(
-        `${API_URL}/bookings/${id}`
+        `${API_BASE_URL}/bookings/${id}`
       )
       currentBooking.value = response.data
       return response.data
@@ -100,7 +100,7 @@ export const useBookingStore = defineStore('booking', () => {
     error.value = null
     try {
       const response = await axios.get<BookingUpdateForm>(
-        `${API_URL}/bookings/${id}/update`
+        `${API_BASE_URL}/bookings/${id}/update`
       )
       currentBookingForm.value = response.data
       return response.data
@@ -121,7 +121,7 @@ export const useBookingStore = defineStore('booking', () => {
     error.value = null
     try {
       const response = await axios.put<BookingResponse>(
-        `${API_URL}/bookings/${id}`,
+        `${API_BASE_URL}/bookings/${id}`,
         request
       )
       await fetchBookings() // Refresh list
@@ -139,7 +139,7 @@ export const useBookingStore = defineStore('booking', () => {
     loading.value = true
     error.value = null
     try {
-      await axios.delete(`${API_URL}/bookings/${id}`)
+      await axios.delete(`${API_BASE_URL}/bookings/${id}`)
       await fetchBookings() // Refresh list
     } catch (err: any) {
       error.value = err.response?.data?.error || err.response?.data?.message || 'Failed to cancel booking'
@@ -158,7 +158,7 @@ export const useBookingStore = defineStore('booking', () => {
     error.value = null
     try {
       const response = await axios.get<BookingStatistics>(
-        `${API_URL}/bookings/statistics`,
+        `${API_BASE_URL}/bookings/statistics`,
         {
           params: { month, year }
         }

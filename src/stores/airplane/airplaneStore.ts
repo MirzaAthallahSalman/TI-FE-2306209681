@@ -4,7 +4,7 @@ import { ref } from 'vue'
 import axios from 'axios'
 import type { Airplane, AirplaneRequest } from '@/interfaces/airplane.interface'
 
-const API_URL = import.meta.env.VITE_API_BASE_URL
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api'
 
 export const useAirplaneStore = defineStore('airplane', () => {
   const airplanes = ref<Airplane[]>([])
@@ -16,7 +16,7 @@ export const useAirplaneStore = defineStore('airplane', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.get<Airplane[]>(`${API_URL}/airplanes`)
+      const response = await axios.get<Airplane[]>(`${API_BASE_URL}/airplanes`)
       airplanes.value = response.data // ← Langsung response.data
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to fetch airplanes'
@@ -29,7 +29,7 @@ export const useAirplaneStore = defineStore('airplane', () => {
   // Get airplane by ID
   const getAirplaneById = async (id: string): Promise<Airplane> => {
     try {
-      const response = await axios.get<Airplane>(`${API_URL}/airplanes/${id}`)
+      const response = await axios.get<Airplane>(`${API_BASE_URL}/airplanes/${id}`)
       return response.data // ← Langsung response.data
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to fetch airplane'
@@ -41,7 +41,7 @@ export const useAirplaneStore = defineStore('airplane', () => {
   const createAirplane = async (request: AirplaneRequest): Promise<Airplane> => {
     try {
       const response = await axios.post<Airplane>(
-        `${API_URL}/airplanes`,
+        `${API_BASE_URL}/airplanes`,
         request
       )
       await fetchAirplanes()
@@ -56,7 +56,7 @@ export const useAirplaneStore = defineStore('airplane', () => {
   const updateAirplane = async (id: string, request: AirplaneRequest): Promise<Airplane> => {
     try {
       const response = await axios.put<Airplane>(
-        `${API_URL}/airplanes/${id}`,
+        `${API_BASE_URL}/airplanes/${id}`,
         request
       )
       await fetchAirplanes()
@@ -70,7 +70,7 @@ export const useAirplaneStore = defineStore('airplane', () => {
   // Delete airplane
   const deleteAirplane = async (id: string) => {
     try {
-      await axios.delete(`${API_URL}/airplanes/${id}`)
+      await axios.delete(`${API_BASE_URL}/airplanes/${id}`)
       await fetchAirplanes()
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to delete airplane'
@@ -89,7 +89,7 @@ export const useAirplaneStore = defineStore('airplane', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.get<Airplane[]>(`${API_URL}/airplanes/search`, {
+      const response = await axios.get<Airplane[]>(`${API_BASE_URL}/airplanes/search`, {
         params
       })
       airplanes.value = response.data // ← Langsung response.data

@@ -5,15 +5,15 @@ WORKDIR /app
 
 COPY package*.json ./
 
-ARG VITE_API_URL
+ARG VITE_API_BASE_URL
 
-ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
 RUN npm ci
 
 COPY . .
 
-RUN echo "VITE_API_URL=$VITE_API_URL" > .env.production
+RUN echo "VITE_API_BASE_URL=$VITE_API_BASE_URL" > .env.production
 
 RUN npm run build
 
