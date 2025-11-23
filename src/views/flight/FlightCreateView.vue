@@ -369,7 +369,7 @@ const loadAirplanes = async () => {
 
 const loadAirports = async () => {
   try {
-    const API_BASE_URL = 'http://localhost:8081/api'
+    const API_BASE_URL = 'http://2306209681-be.hafizmuh.site/api'
     const response = await axios.get(`${API_BASE_URL}/airports`)
     airports.value = response.data
   } catch (error) {

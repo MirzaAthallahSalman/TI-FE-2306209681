@@ -12,7 +12,7 @@ import type {
   BookingStatistics
 } from '@/interfaces/booking.interface'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api'
+const API_BASE_URL = 'http://2306209681-be.hafizmuh.site/api'
 
 export const useBookingStore = defineStore('booking', () => {
   const bookings = ref<BookingResponse[]>([])

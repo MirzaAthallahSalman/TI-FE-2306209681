@@ -4,7 +4,7 @@ import { ref } from 'vue'
 import axios from 'axios'
 import type { Airplane, AirplaneRequest } from '@/interfaces/airplane.interface'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api'
+const API_BASE_URL = 'http://2306209681-be.hafizmuh.site/api'
 
 export const useAirplaneStore = defineStore('airplane', () => {
   const airplanes = ref<Airplane[]>([])

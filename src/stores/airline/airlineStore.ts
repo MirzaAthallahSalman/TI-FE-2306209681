@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import axios from 'axios'
 import type { Airline } from '@/interfaces/airline.interface'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api'
+const API_BASE_URL = 'http://2306209681-be.hafizmuh.site/api'
 
 export const useAirlineStore = defineStore('airline', () => {
   const airlines = ref<Airline[]>([])
