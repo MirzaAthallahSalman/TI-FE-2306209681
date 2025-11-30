@@ -1,10 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import axios from 'axios'
+import { flightApi } from '@/api/axiosConfig'
 import type { Airplane, AirplaneRequest } from '@/interfaces/airplane.interface'
-
-const API_BASE_URL = 'http://2306209681-be.hafizmuh.site/api'
 
 export const useAirplaneStore = defineStore('airplane', () => {
   const airplanes = ref<Airplane[]>([])
@@ -16,8 +14,8 @@ export const useAirplaneStore = defineStore('airplane', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.get<Airplane[]>(`${API_BASE_URL}/airplanes`)
-      airplanes.value = response.data // ← Langsung response.data
+      const response = await flightApi.get<Airplane[]>('/airplanes')
+      airplanes.value = response.data
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to fetch airplanes'
       throw err
@@ -29,8 +27,8 @@ export const useAirplaneStore = defineStore('airplane', () => {
   // Get airplane by ID
   const getAirplaneById = async (id: string): Promise<Airplane> => {
     try {
-      const response = await axios.get<Airplane>(`${API_BASE_URL}/airplanes/${id}`)
-      return response.data // ← Langsung response.data
+      const response = await flightApi.get<Airplane>(`/airplanes/${id}`)
+      return response.data
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to fetch airplane'
       throw err
@@ -40,12 +38,9 @@ export const useAirplaneStore = defineStore('airplane', () => {
   // Create airplane
   const createAirplane = async (request: AirplaneRequest): Promise<Airplane> => {
     try {
-      const response = await axios.post<Airplane>(
-        `${API_BASE_URL}/airplanes`,
-        request
-      )
+      const response = await flightApi.post<Airplane>('/airplanes', request)
       await fetchAirplanes()
-      return response.data // ← Langsung response.data
+      return response.data
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to create airplane'
       throw err
@@ -55,12 +50,9 @@ export const useAirplaneStore = defineStore('airplane', () => {
   // Update airplane
   const updateAirplane = async (id: string, request: AirplaneRequest): Promise<Airplane> => {
     try {
-      const response = await axios.put<Airplane>(
-        `${API_BASE_URL}/airplanes/${id}`,
-        request
-      )
+      const response = await flightApi.put<Airplane>(`/airplanes/${id}`, request)
       await fetchAirplanes()
-      return response.data // ← Langsung response.data
+      return response.data
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to update airplane'
       throw err
@@ -70,7 +62,7 @@ export const useAirplaneStore = defineStore('airplane', () => {
   // Delete airplane
   const deleteAirplane = async (id: string) => {
     try {
-      await axios.delete(`${API_BASE_URL}/airplanes/${id}`)
+      await flightApi.delete(`/airplanes/${id}`)
       await fetchAirplanes()
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to delete airplane'
@@ -89,10 +81,8 @@ export const useAirplaneStore = defineStore('airplane', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.get<Airplane[]>(`${API_BASE_URL}/airplanes/search`, {
-        params
-      })
-      airplanes.value = response.data // ← Langsung response.data
+      const response = await flightApi.get<Airplane[]>('/airplanes/search', { params })
+      airplanes.value = response.data
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to search airplanes'
       throw err

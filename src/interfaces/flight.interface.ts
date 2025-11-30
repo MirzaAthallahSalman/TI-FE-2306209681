@@ -50,30 +50,34 @@ export interface ClassFlightUpdate {
 
 // ===== Flight DTOs =====
 export interface FlightResponse {
-  id: string
-  airlineId: string
-  airlineName: string
-  airplaneId: string
-  airplaneModel: string
-  originAirportCode: string
-  originAirportName: string
-  originCity: string
-  destinationAirportCode: string
-  destinationAirportName: string
-  destinationCity: string
-  departureTime: string // ISO string
-  arrivalTime: string // ISO string
-  terminal: string | null
-  gate: string
-  baggageAllowance: number
-  facilities: string | null
-  status: number
-  statusText: string
-  totalSeats: number
-  availableSeats: number
-  createdAt: string
-  updatedAt: string
-  classFlights: ClassFlightResponse[]
+  id: string
+  flightNumber: string // 💡 Ditambahkan (Ada di FlightResponseDTO)
+  airlineId: string
+  airlineName: string
+  airplaneId: string
+  airplaneModel: string
+ 
+  // 💡 PERUBAHAN: Tambahkan ID Bandara
+  originAirportCode: string
+  originAirportName: string
+  originCity: string
+  destinationAirportCode: string
+  destinationAirportName: string
+  destinationCity: string
+ 
+  departureTime: string // ISO string (LocalDateTime)
+  arrivalTime: string // ISO string (LocalDateTime)
+  terminal: string | null
+  gate: string
+  baggageAllowance: number
+  facilities: string | null
+  status: number
+  statusText: string
+  totalSeats: number
+  availableSeats: number
+  createdAt: string // (LocalDateTime)
+  updatedAt: string // (LocalDateTime)
+  classFlights: ClassFlightResponse[]
 }
 
 export interface FlightDetailResponse {
@@ -110,27 +114,35 @@ export interface FlightDetailResponse {
 }
 
 export interface FlightRequest {
-  airlineId: string
-  airplaneId: string
-  originAirportCode: string
-  destinationAirportCode: string
-  departureTime: string // ISO string
-  arrivalTime: string // ISO string
-  terminal?: string
-  gate: string
-  baggageAllowance: number
-  facilities?: string
-  classFlights: ClassFlightRequest[]
+  airlineId: string // (UUID)
+  airplaneId: string // (UUID)
+
+  // 💡 PERUBAHAN: Tambahkan ID Bandara (UUID)
+  // (UUID) - Wajib (Not Null di BE)
+
+  // Code bandara tetap ada di interface agar BE DTO lengkap,
+  // tetapi nilainya bisa string kosong/null dari FE karena BE yang akan mengisi ulang.
+  // Di FE, ini bisa dianggap opsional / diabaikan
+  originAirportCode?: string
+  destinationAirportCode?: string
+
+  departureTime: string // ISO string (LocalDateTime)
+  arrivalTime: string // ISO string (LocalDateTime)
+  terminal?: string | null
+  gate: string
+  baggageAllowance: number
+  facilities?: string | null
+  classFlights: ClassFlightRequest[]
 }
 
 export interface FlightUpdateRequest {
-  departureTime: string
-  arrivalTime: string
-  terminal?: string
-  gate?: string
-  baggageAllowance: number
-  facilities?: string
-  classFlights: ClassFlightUpdate[]
+  departureTime: string // (LocalDateTime)
+  arrivalTime: string // (LocalDateTime)
+  terminal?: string | null // string | null (di BE adalah String)
+  gate?: string | null // string | null
+  baggageAllowance: number
+  facilities?: string | null
+  classFlights: ClassFlightUpdate[]
 }
 
 // ===== Search & Filter Params =====

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import axios from 'axios'
+import { flightApi } from '@/api/axiosConfig'
 import type {
   BookingRequest,
   BookingResponse,
@@ -11,8 +11,6 @@ import type {
   TwoWayBookingResponse,
   BookingStatistics
 } from '@/interfaces/booking.interface'
-
-const API_BASE_URL = 'http://2306209681-be.hafizmuh.site/api'
 
 export const useBookingStore = defineStore('booking', () => {
   const bookings = ref<BookingResponse[]>([])
@@ -26,14 +24,11 @@ export const useBookingStore = defineStore('booking', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.post<BookingResponse>(
-        `${API_BASE_URL}/bookings`,
-        request
-      )
+      const response = await flightApi.post<BookingResponse>('/bookings/create', request)
       await fetchBookings() // Refresh list
       return response.data
     } catch (err: any) {
-      error.value = err.response?.data?.message || err.message || 'Failed to create booking'
+      error.value = err.response?.data?.error || err.response?.data?.message || 'Failed to create booking'
       throw err
     } finally {
       loading.value = false
@@ -47,14 +42,11 @@ export const useBookingStore = defineStore('booking', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.post<TwoWayBookingResponse>(
-        `${API_BASE_URL}/bookings/two-way`,
-        request
-      )
+      const response = await flightApi.post<TwoWayBookingResponse>('/bookings/create-two-way', request)
       await fetchBookings() // Refresh list
       return response.data
     } catch (err: any) {
-      error.value = err.response?.data?.message || err.message || 'Failed to create two-way booking'
+      error.value = err.response?.data?.error || err.response?.data?.message || 'Failed to create two-way booking'
       throw err
     } finally {
       loading.value = false
@@ -66,10 +58,10 @@ export const useBookingStore = defineStore('booking', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.get<BookingResponse[]>(`${API_BASE_URL}/bookings`)
+      const response = await flightApi.get<BookingResponse[]>('/bookings')
       bookings.value = response.data
     } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to fetch bookings'
+      error.value = err.response?.data?.error || err.response?.data?.message || 'Failed to fetch bookings'
       throw err
     } finally {
       loading.value = false
@@ -81,13 +73,11 @@ export const useBookingStore = defineStore('booking', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.get<BookingResponse>(
-        `${API_BASE_URL}/bookings/${id}`
-      )
+      const response = await flightApi.get<BookingResponse>(`/bookings/${id}`)
       currentBooking.value = response.data
       return response.data
     } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to fetch booking'
+      error.value = err.response?.data?.error || err.response?.data?.message || 'Failed to fetch booking'
       throw err
     } finally {
       loading.value = false
@@ -99,13 +89,11 @@ export const useBookingStore = defineStore('booking', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.get<BookingUpdateForm>(
-        `${API_BASE_URL}/bookings/${id}/update`
-      )
+      const response = await flightApi.get<BookingUpdateForm>(`/bookings/${id}/update`)
       currentBookingForm.value = response.data
       return response.data
     } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to fetch booking for update'
+      error.value = err.response?.data?.error || err.response?.data?.message || 'Failed to fetch booking for update'
       throw err
     } finally {
       loading.value = false
@@ -120,10 +108,7 @@ export const useBookingStore = defineStore('booking', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.put<BookingResponse>(
-        `${API_BASE_URL}/bookings/${id}`,
-        request
-      )
+      const response = await flightApi.put<BookingResponse>(`/bookings/${id}/update`, request)
       await fetchBookings() // Refresh list
       return response.data
     } catch (err: any) {
@@ -139,7 +124,7 @@ export const useBookingStore = defineStore('booking', () => {
     loading.value = true
     error.value = null
     try {
-      await axios.delete(`${API_BASE_URL}/bookings/${id}`)
+      await flightApi.delete(`/bookings/${id}`)
       await fetchBookings() // Refresh list
     } catch (err: any) {
       error.value = err.response?.data?.error || err.response?.data?.message || 'Failed to cancel booking'
@@ -157,15 +142,12 @@ export const useBookingStore = defineStore('booking', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.get<BookingStatistics>(
-        `${API_BASE_URL}/bookings/statistics`,
-        {
-          params: { month, year }
-        }
-      )
+      const response = await flightApi.get<BookingStatistics>('/bookings/statistics', {
+        params: { month, year }
+      })
       return response.data
     } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to fetch booking statistics'
+      error.value = err.response?.data?.error || err.response?.data?.message || 'Failed to fetch booking statistics'
       throw err
     } finally {
       loading.value = false

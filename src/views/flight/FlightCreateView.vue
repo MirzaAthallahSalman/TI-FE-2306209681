@@ -6,10 +6,16 @@
     <nav class="navbar">
       <div class="nav-brand">✈️ Flight Management</div>
       <div class="nav-links">
-        <router-link to="/">Home</router-link>
-        <router-link to="/airplanes">Airplanes</router-link>
+        <router-link v-if="authStore.canAccessHome" to="/">Home</router-link>
+        <router-link v-if="authStore.canAccessAirplanes" to="/airplanes">Airplanes</router-link>
         <router-link to="/flights" class="active">Flights</router-link>
         <router-link to="/bookings">Flight Bookings</router-link>
+        <router-link v-if="authStore.canAccessStatistics" to="/statistics">📊 Statistics</router-link>
+        <router-link to="/tickets">🎫 Support</router-link>
+        <div class="user-section" v-if="authStore.isAuthenticated">
+          <span class="user-role">{{ authStore.user?.role }}</span>
+          <button @click="handleLogout" class="btn-logout">Logout</button>
+        </div>
       </div>
     </nav>
 
@@ -293,6 +299,7 @@ import { useRouter } from 'vue-router'
 import { useFlightStore } from '@/stores/flight/flightStore'
 import { useAirlineStore } from '@/stores/airline/airlineStore'
 import { useAirplaneStore } from '@/stores/airplane/airplaneStore'
+import { useAuthStore } from '@/stores/auth/authStore'
 import type { FlightRequest, ClassFlightRequest } from '@/interfaces/flight.interface'
 import type { Airline } from '@/interfaces/airline.interface'
 import type { Airplane } from '@/interfaces/airplane.interface'
@@ -302,6 +309,13 @@ const router = useRouter()
 const flightStore = useFlightStore()
 const airlineStore = useAirlineStore()
 const airplaneStore = useAirplaneStore()
+const authStore = useAuthStore()
+
+// Logout handler
+const handleLogout = () => {
+  authStore.logout()
+  router.push('/login')
+}
 
 // State
 const loading = ref(false)
@@ -512,6 +526,41 @@ onMounted(async () => {
 .nav-links a:hover,
 .nav-links a.active {
   background: rgba(255, 255, 255, 0.2);
+}
+
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 15px;
+  padding-left: 15px;
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.user-role {
+  color: white;
+  font-size: 0.75rem;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.btn-logout {
+  background: rgba(239, 68, 68, 0.8);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.btn-logout:hover {
+  background: #ef4444;
+  transform: translateY(-1px);
 }
 
 /* Header */

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import axios from 'axios'
+import { flightApi } from '@/api/axiosConfig'
 import type {
   FlightResponse,
   FlightDetailResponse,
@@ -10,8 +10,6 @@ import type {
   FlightSearchParams,
   RoundTripParams
 } from '@/interfaces/flight.interface'
-
-const API_BASE_URL = 'http://2306209681-be.hafizmuh.site/api'
 
 export const useFlightStore = defineStore('flight', () => {
   const flights = ref<FlightResponse[]>([])
@@ -24,10 +22,7 @@ export const useFlightStore = defineStore('flight', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.post<FlightResponse>(
-        `${API_BASE_URL}/flights`,
-        request
-      )
+      const response = await flightApi.post<FlightResponse>('/flights', request)
       await fetchFlights() // Refresh list
       return response.data
     } catch (err: any) {
@@ -43,7 +38,7 @@ export const useFlightStore = defineStore('flight', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.get<FlightResponse[]>(`${API_BASE_URL}/flights`)
+      const response = await flightApi.get<FlightResponse[]>('/flights')
       flights.value = response.data
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to fetch flights'
@@ -58,9 +53,7 @@ export const useFlightStore = defineStore('flight', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.get<FlightDetailResponse>(
-        `${API_BASE_URL}/flights/${id}`
-      )
+      const response = await flightApi.get<FlightDetailResponse>(`/flights/${id}`)
       currentFlight.value = response.data
       return response.data
     } catch (err: any) {
@@ -76,9 +69,7 @@ export const useFlightStore = defineStore('flight', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.get<FlightDetailResponse>(
-        `${API_BASE_URL}/flights/${id}/update`
-      )
+      const response = await flightApi.get<FlightDetailResponse>(`/flights/${id}/update`)
       currentFlight.value = response.data
       return response.data
     } catch (err: any) {
@@ -94,10 +85,7 @@ export const useFlightStore = defineStore('flight', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.get<FlightResponse[]>(
-        `${API_BASE_URL}/flights/search`,
-        { params }
-      )
+      const response = await flightApi.get<FlightResponse[]>('/flights/search', { params })
       flights.value = response.data
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to search flights'
@@ -112,10 +100,7 @@ export const useFlightStore = defineStore('flight', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.get<FlightResponse[]>(
-        `${API_BASE_URL}/flights/round-trip`,
-        { params }
-      )
+      const response = await flightApi.get<FlightResponse[]>('/flights/round-trip', { params })
       flights.value = response.data
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to search round trip flights'
@@ -133,10 +118,7 @@ export const useFlightStore = defineStore('flight', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.put<FlightResponse>(
-        `${API_BASE_URL}/flights/${id}/update`,
-        request
-      )
+      const response = await flightApi.put<FlightResponse>(`/flights/${id}/update`, request)
       await fetchFlights() // Refresh list
       return response.data
     } catch (err: any) {
@@ -152,7 +134,7 @@ export const useFlightStore = defineStore('flight', () => {
     loading.value = true
     error.value = null
     try {
-      await axios.delete(`${API_BASE_URL}/flights/${id}`)
+      await flightApi.delete(`/flights/${id}`)
       await fetchFlights() // Refresh list
     } catch (err: any) {
       error.value = err.response?.data?.error || err.response?.data?.message || 'Failed to cancel flight'

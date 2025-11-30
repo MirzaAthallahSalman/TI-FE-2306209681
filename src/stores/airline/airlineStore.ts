@@ -1,23 +1,15 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import axios from 'axios'
+import { flightApi } from '@/api/axiosConfig'
 import type { Airline } from '@/interfaces/airline.interface'
-
-const API_BASE_URL = 'http://2306209681-be.hafizmuh.site/api'
 
 export const useAirlineStore = defineStore('airline', () => {
   const airlines = ref<Airline[]>([])
 
   const fetchAirlines = async () => {
     try {
-      // ❌ BEFORE (dengan BaseResponse):
-      // const response = await axios.get<BaseResponse<Airline[]>>(`${API_URL}/airlines`)
-      // airlines.value = response.data.data
-
-      // ✅ AFTER (tanpa BaseResponse):
-      const response = await axios.get<Airline[]>(`${API_BASE_URL}/airlines`)
-      airlines.value = response.data // ← Langsung ambil response.data
-
+      const response = await flightApi.get<Airline[]>('/airlines')
+      airlines.value = response.data
     } catch (err) {
       console.error('Failed to fetch airlines:', err)
       throw err

@@ -1,279 +1,284 @@
 <!-- eslint-disable @typescript-eslint/no-explicit-any -->
 <template>
-  <div class="container">
+  <div class="flight-list-container">
     <!-- Navbar -->
     <nav class="navbar">
-      <div class="nav-brand">
-        ✈️ Flight Management
-      </div>
+      <div class="nav-brand">✈️ Flight Management</div>
       <div class="nav-links">
-        <router-link to="/">Home</router-link>
-        <router-link to="/airplanes">Airplanes</router-link>
+        <router-link v-if="authStore.canAccessHome" to="/">Home</router-link>
+        <router-link v-if="authStore.canAccessAirplanes" to="/airplanes">Airplanes</router-link>
         <router-link to="/flights">Flights</router-link>
         <router-link to="/bookings" class="active">Flight Bookings</router-link>
-        <router-link to="/statistics">📊 Statistics</router-link>
+        <router-link v-if="authStore.canAccessStatistics" to="/statistics">📊 Statistics</router-link>
+        <router-link to="/tickets">🎫 Support</router-link>
+        <div class="user-section" v-if="authStore.isAuthenticated">
+          <span class="user-role">{{ authStore.user?.role }}</span>
+          <button @click="handleLogout" class="btn-logout">Logout</button>
+        </div>
       </div>
     </nav>
 
-    <!-- Header -->
-    <div class="header-section">
-      <div class="header-content">
-        <div class="header-icon">📋</div>
-        <div class="header-title">Flight Bookings</div>
-      </div>
-      <div class="header-actions">
-        <router-link to="/statistics" class="btn-statistics">
-          📊 View Analytics
-        </router-link>
-      </div>
-    </div>
-
-    <!-- Statistics Cards -->
-    <div class="stats-grid">
-      <div class="stat-card" @click="$router.push('/statistics')">
-        <div class="stat-icon total">
-          📋
+    <div class="container">
+      <!-- Header -->
+      <div class="header-section">
+        <div class="header-content">
+          <div class="header-icon">📋</div>
+          <div class="header-title">Flight Bookings</div>
         </div>
-        <div class="stat-content">
-          <div class="stat-label">Total Bookings</div>
-          <div class="stat-value">{{ statistics.total }}</div>
+        <div class="header-actions" v-if="authStore.canAccessStatistics">
+          <router-link to="/statistics" class="btn-statistics">
+            📊 View Analytics
+          </router-link>
         </div>
       </div>
 
-      <div class="stat-card" @click="$router.push('/statistics')">
-        <div class="stat-icon paid">
-          ✅
+      <!-- Statistics Cards -->
+      <div class="stats-grid">
+        <div class="stat-card" @click="$router.push('/statistics')">
+          <div class="stat-icon total">
+            📋
+          </div>
+          <div class="stat-content">
+            <div class="stat-label">Total Bookings</div>
+            <div class="stat-value">{{ statistics.total }}</div>
+          </div>
         </div>
-        <div class="stat-content">
-          <div class="stat-label">Paid</div>
-          <div class="stat-value">{{ statistics.paid }}</div>
+
+        <div class="stat-card" @click="$router.push('/statistics')">
+          <div class="stat-icon paid">
+            ✅
+          </div>
+          <div class="stat-content">
+            <div class="stat-label">Paid</div>
+            <div class="stat-value">{{ statistics.paid }}</div>
+          </div>
+        </div>
+
+        <div class="stat-card" @click="$router.push('/statistics')">
+          <div class="stat-icon unpaid">
+            ⏳
+          </div>
+          <div class="stat-content">
+            <div class="stat-label">Unpaid</div>
+            <div class="stat-value">{{ statistics.unpaid }}</div>
+          </div>
         </div>
       </div>
 
-      <div class="stat-card" @click="$router.push('/statistics')">
-        <div class="stat-icon unpaid">
-          ⏳
-        </div>
-        <div class="stat-content">
-          <div class="stat-label">Unpaid</div>
-          <div class="stat-value">{{ statistics.unpaid }}</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Filter Section -->
-    <div class="filter-section">
-      <!-- View Toggle -->
-      <div class="view-toggle">
-        <div class="toggle-buttons">
-          <button class="toggle-btn active">
-            📋 View Bookings
+      <!-- Filter Section -->
+      <div class="filter-section">
+        <!-- View Toggle -->
+        <div class="view-toggle">
+          <div class="toggle-buttons">
+            <button class="toggle-btn active">
+              📋 View Bookings
+            </button>
+          </div>
+          <button v-if="authStore.canAccessStatistics" class="btn-view-analytics" @click="$router.push('/statistics')">
+            📈 View Detailed Analytics
           </button>
         </div>
-        <button class="btn-view-analytics" @click="$router.push('/statistics')">
-          📈 View Detailed Analytics
-        </button>
-      </div>
 
-      <div class="filter-grid">
-        <div class="filter-group">
-          <label>✈️ Flight Number</label>
-          <input
-            v-model="filters.flightNumber"
-            type="text"
-            placeholder="Search by flight number..."
-          >
-        </div>
-
-        <div class="filter-group">
-          <label>📊 Status</label>
-          <select v-model="filters.status">
-            <option value="">All Statuses</option>
-            <option value="1">Unpaid</option>
-            <option value="2">Paid</option>
-            <option value="3">Cancelled</option>
-            <option value="4">Rescheduled</option>
-          </select>
-        </div>
-
-        <div class="filter-group">
-          <label>📧 Contact Email</label>
-          <input
-            v-model="filters.email"
-            type="text"
-            placeholder="Search by email..."
-          >
-        </div>
-
-        <div class="filter-group">
-          <label>🔍 Search</label>
-          <input
-            v-model="filters.search"
-            type="text"
-            placeholder="Booking ID, email, phone..."
-          >
-        </div>
-      </div>
-
-      <div class="filter-actions">
-        <button class="btn-reset" @click="applyFilters">
-          🔍 Search
-        </button>
-        <button class="btn-reset" @click="resetFilters">
-          🔄 Reset
-        </button>
-      </div>
-
-      <!-- Show Inactive Toggle -->
-      <div style="margin-top: 15px;">
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-          <input
-            v-model="filters.showInactive"
-            type="checkbox"
-            style="width: 18px; height: 18px; cursor: pointer;"
-          >
-          <span style="font-weight: 600; color: #555;">🚫 Show Inactive</span>
-          <span style="color: #999; font-size: 0.85rem;">Active Only</span>
-        </label>
-      </div>
-    </div>
-
-    <!-- Loading -->
-    <div v-if="bookingStore.loading" class="loading">
-      <div class="spinner"></div>
-      <p>Loading bookings...</p>
-    </div>
-
-    <!-- Bookings Table -->
-    <div v-else-if="filteredBookings.length > 0" class="bookings-table-container">
-      <table class="bookings-table">
-        <thead>
-          <tr>
-            <th>NO</th>
-            <th>BOOKING ID</th>
-            <th>FLIGHT NUMBER</th>
-            <th>ROUTE</th>
-            <th>CLASS</th>
-            <th>CONTACT INFO</th>
-            <th>PASSENGERS</th>
-            <th>TOTAL PRICE</th>
-            <th>STATUS</th>
-            <th>CREATED AT</th>
-            <th>ACTIONS</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(booking, index) in filteredBookings" :key="booking.bookingId">
-            <td>{{ index + 1 }}</td>
-            <td>
-              <div class="booking-code">
-                {{ checkIfTwoWayBooking(booking) ? '🔄 ' : '' }}{{ booking.bookingCode || booking.bookingId }}
-              </div>
-              <div style="font-size: 0.8rem; color: #999;">{{ booking.bookingId }}</div>
-              <span
-                v-if="checkIfTwoWayBooking(booking)"
-                style="font-size: 0.75rem; color: #667eea; font-weight: 600;"
-              >
-                Round Trip
-              </span>
-            </td>
-            <td>
-              <strong>{{ booking.flightNumber || booking.flightId }}</strong>
-            </td>
-            <td>
-              <div class="route">
-                <span>{{ booking.originAirportCode || '-' }}</span>
-                <span>→</span>
-                <span>{{ booking.destinationAirportCode || '-' }}</span>
-              </div>
-            </td>
-            <td>{{ booking.className || '-' }}</td>
-            <td>
-              <div>📧 {{ booking.contactEmail || '-' }}</div>
-              <div style="font-size: 0.85rem; color: #999;">📱 {{ booking.contactPhone || '-' }}</div>
-            </td>
-            <td>
-              <strong style="color: #667eea;">{{ booking.passengerCount }}</strong> passengers
-            </td>
-            <td>
-              <strong style="color: #10b981;">{{ bookingStore.formatPrice(booking.totalPrice) }}</strong>
-            </td>
-            <td>
-              <span
-                class="status-badge"
-                :class="getStatusClass(booking.status)"
-              >
-                {{ bookingStore.getBookingStatusText(booking.status) }}
-              </span>
-            </td>
-            <td>{{ bookingStore.formatDateTime(booking.createdAt) }}</td>
-            <td>
-              <div class="action-buttons">
-                <button
-                  class="btn btn-detail"
-                  @click="viewDetail(booking.bookingId)"
-                >
-                  ℹ️ Detail
-                </button>
-                <button
-                  class="btn btn-cancel"
-                  @click="showCancelModal(booking)"
-                  :disabled="booking.status !== 1 && booking.status !== 2"
-                >
-                  ✖️ Cancel
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Empty State -->
-    <div v-else class="bookings-table-container empty-state">
-      <div class="empty-icon">📋</div>
-      <h3 class="empty-title">No Bookings Found</h3>
-      <p class="empty-text">No bookings match your search criteria</p>
-      <button class="btn-reset" @click="resetFilters" style="margin-top: 20px;">
-        🔄 Clear Filters
-      </button>
-    </div>
-
-    <!-- Cancel Booking Modal -->
-    <div v-if="showModal && selectedBooking" class="modal-overlay" @click.self="closeModal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <div class="modal-icon">⚠️</div>
-          <h2 class="modal-title">Confirm Booking Cancellation</h2>
-        </div>
-        <div class="modal-body">
-          <p class="modal-text">
-            Are you sure you want to cancel booking
-            <strong>{{ selectedBooking.bookingCode || selectedBooking.bookingId }}</strong>?
-          </p>
-
-          <div class="booking-info">
-            <div>📍 {{ selectedBooking.originAirportCode }} → {{ selectedBooking.destinationAirportCode }}</div>
-            <div>🔖 Class: {{ selectedBooking.className }}</div>
-            <div>📊 Status: {{ bookingStore.getBookingStatusText(selectedBooking.status) }}</div>
-            <div>👥 {{ selectedBooking.passengerCount }} passengers</div>
-            <div>💰 Total: {{ bookingStore.formatPrice(selectedBooking.totalPrice) }}</div>
+        <div class="filter-grid">
+          <div class="filter-group">
+            <label>✈️ Flight Number</label>
+            <input
+              v-model="filters.flightNumber"
+              type="text"
+              placeholder="Search by flight number..."
+            >
           </div>
 
-          <div class="warning-box">
-            <span>⚠️</span>
-            <div>
-              <strong>This action will cancel the booking. This action cannot be undone.</strong>
+          <div class="filter-group">
+            <label>📊 Status</label>
+            <select v-model="filters.status">
+              <option value="">All Statuses</option>
+              <option value="1">Unpaid</option>
+              <option value="2">Paid</option>
+              <option value="3">Cancelled</option>
+              <option value="4">Rescheduled</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>📧 Contact Email</label>
+            <input
+              v-model="filters.email"
+              type="text"
+              placeholder="Search by email..."
+            >
+          </div>
+
+          <div class="filter-group">
+            <label>🔍 Search</label>
+            <input
+              v-model="filters.search"
+              type="text"
+              placeholder="Booking ID, email, phone..."
+            >
+          </div>
+        </div>
+
+        <div class="filter-actions">
+          <button class="btn-reset" @click="applyFilters">
+            🔍 Search
+          </button>
+          <button class="btn-reset" @click="resetFilters">
+            🔄 Reset
+          </button>
+        </div>
+
+        <!-- Show Inactive Toggle -->
+        <div style="margin-top: 15px;">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input
+              v-model="filters.showInactive"
+              type="checkbox"
+              style="width: 18px; height: 18px; cursor: pointer;"
+            >
+            <span style="font-weight: 600; color: #555;">🚫 Show Inactive</span>
+            <span style="color: #999; font-size: 0.85rem;">Active Only</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div v-if="bookingStore.loading" class="loading">
+        <div class="spinner"></div>
+        <p>Loading bookings...</p>
+      </div>
+
+      <!-- Bookings Table -->
+      <div v-else-if="filteredBookings.length > 0" class="bookings-table-container">
+        <table class="bookings-table">
+          <thead>
+            <tr>
+              <th>NO</th>
+              <th>BOOKING ID</th>
+              <th>FLIGHT NUMBER</th>
+              <th>ROUTE</th>
+              <th>CLASS</th>
+              <th>CONTACT INFO</th>
+              <th>PASSENGERS</th>
+              <th>TOTAL PRICE</th>
+              <th>STATUS</th>
+              <th>CREATED AT</th>
+              <th v-if="authStore.canManageBookings">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(booking, index) in filteredBookings" :key="booking.bookingId">
+              <td>{{ index + 1 }}</td>
+              <td>
+                <div class="booking-code">
+                  {{ checkIfTwoWayBooking(booking) ? '🔄 ' : '' }}{{ booking.bookingCode || booking.bookingId }}
+                </div>
+                <div style="font-size: 0.8rem; color: #999;">{{ booking.bookingId }}</div>
+                <span
+                  v-if="checkIfTwoWayBooking(booking)"
+                  style="font-size: 0.75rem; color: #667eea; font-weight: 600;"
+                >
+                  Round Trip
+                </span>
+              </td>
+              <td>
+                <strong>{{ booking.flightNumber || booking.flightId }}</strong>
+              </td>
+              <td>
+                <div class="route">
+                  <span>{{ booking.originAirportCode || '-' }}</span>
+                  <span>→</span>
+                  <span>{{ booking.destinationAirportCode || '-' }}</span>
+                </div>
+              </td>
+              <td>{{ booking.className || '-' }}</td>
+              <td>
+                <div>📧 {{ booking.contactEmail || '-' }}</div>
+                <div style="font-size: 0.85rem; color: #999;">📱 {{ booking.contactPhone || '-' }}</div>
+              </td>
+              <td>
+                <strong style="color: #667eea;">{{ booking.passengerCount }}</strong> passengers
+              </td>
+              <td>
+                <strong style="color: #10b981;">{{ bookingStore.formatPrice(booking.totalPrice) }}</strong>
+              </td>
+              <td>
+                <span
+                  class="status-badge"
+                  :class="getStatusClass(booking.status)"
+                >
+                  {{ bookingStore.getBookingStatusText(booking.status) }}
+                </span>
+              </td>
+              <td>{{ bookingStore.formatDateTime(booking.createdAt) }}</td>
+              <td v-if="authStore.canManageBookings">
+                <div class="action-buttons">
+                  <button
+                    class="btn btn-detail"
+                    @click="viewDetail(booking.bookingId)"
+                  >
+                    ℹ️ Detail
+                  </button>
+                  <button
+                    class="btn btn-cancel"
+                    @click="showCancelModal(booking)"
+                    :disabled="booking.status !== 1 && booking.status !== 2"
+                  >
+                    ✖️ Cancel
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty State -->
+      <div v-else class="bookings-table-container empty-state">
+        <div class="empty-icon">📋</div>
+        <h3 class="empty-title">No Bookings Found</h3>
+        <p class="empty-text">No bookings match your search criteria</p>
+        <button class="btn-reset" @click="resetFilters" style="margin-top: 20px;">
+          🔄 Clear Filters
+        </button>
+      </div>
+
+      <!-- Cancel Booking Modal -->
+      <div v-if="showModal && selectedBooking" class="modal-overlay" @click.self="closeModal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <div class="modal-icon">⚠️</div>
+            <h2 class="modal-title">Confirm Booking Cancellation</h2>
+          </div>
+          <div class="modal-body">
+            <p class="modal-text">
+              Are you sure you want to cancel booking
+              <strong>{{ selectedBooking.bookingCode || selectedBooking.bookingId }}</strong>?
+            </p>
+
+            <div class="booking-info">
+              <div>📍 {{ selectedBooking.originAirportCode }} → {{ selectedBooking.destinationAirportCode }}</div>
+              <div>🔖 Class: {{ selectedBooking.className }}</div>
+              <div>📊 Status: {{ bookingStore.getBookingStatusText(selectedBooking.status) }}</div>
+              <div>👥 {{ selectedBooking.passengerCount }} passengers</div>
+              <div>💰 Total: {{ bookingStore.formatPrice(selectedBooking.totalPrice) }}</div>
+            </div>
+
+            <div class="warning-box">
+              <span>⚠️</span>
+              <div>
+                <strong>This action will cancel the booking. This action cannot be undone.</strong>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="modal-actions">
-          <button class="modal-btn modal-btn-cancel" @click="closeModal">
-            Cancel
-          </button>
-          <button class="modal-btn modal-btn-confirm" @click="confirmCancelBooking">
-            ❌ Cancel Booking
-          </button>
+          <div class="modal-actions">
+            <button class="modal-btn modal-btn-cancel" @click="closeModal">
+              Cancel
+            </button>
+            <button class="modal-btn modal-btn-confirm" @click="confirmCancelBooking">
+              ❌ Cancel Booking
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -284,10 +289,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBookingStore } from '@/stores/booking/bookingStore'
+import { useAuthStore } from '@/stores/auth/authStore'
 import type { BookingResponse } from '@/interfaces/booking.interface'
 
 const router = useRouter()
 const bookingStore = useBookingStore()
+const authStore = useAuthStore()
 
 // State
 const showModal = ref(false)
@@ -300,6 +307,12 @@ const filters = ref({
   search: '',
   showInactive: false
 })
+
+// Logout handler
+const handleLogout = () => {
+  authStore.logout()
+  router.push('/login')
+}
 
 // Computed
 const statistics = computed(() => {
@@ -446,6 +459,12 @@ onMounted(async () => {
   box-sizing: border-box;
 }
 
+.flight-list-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
 .container {
   max-width: 1400px;
   margin: 0 auto;
@@ -458,6 +477,9 @@ onMounted(async () => {
   align-items: center;
   padding: 20px;
   margin-bottom: 20px;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .nav-brand {
@@ -486,6 +508,41 @@ onMounted(async () => {
 .nav-links a:hover,
 .nav-links a.active {
   background: rgba(255, 255, 255, 0.2);
+}
+
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 15px;
+  padding-left: 15px;
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.user-role {
+  color: white;
+  font-size: 0.75rem;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.btn-logout {
+  background: rgba(239, 68, 68, 0.8);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.btn-logout:hover {
+  background: #ef4444;
+  transform: translateY(-1px);
 }
 
 /* Header */
@@ -1046,6 +1103,21 @@ onMounted(async () => {
   .modal-actions {
     flex-direction: column;
     gap: 10px;
+  }
+
+  .navbar {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .nav-links {
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .nav-links a {
+    text-align: center;
   }
 }
 </style>

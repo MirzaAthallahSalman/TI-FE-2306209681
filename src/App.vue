@@ -5,9 +5,22 @@ import 'bootstrap-icons/font/bootstrap-icons.css'
 </script>
 
 <template>
-  <RouterView />
+  <div class="app-container">
+    <!-- Main Content -->
+    <main class="main-content">
+      <RouterView />
+    </main>
+  </div>
 </template>
 
 <style scoped>
-/* Add your global styles here if needed */
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+}
 </style>

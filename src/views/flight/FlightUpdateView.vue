@@ -175,9 +175,25 @@
           </div>
 
           <div id="classContainer">
-            <div v-for="(classItem, index) in formData.classFlights" :key="index" class="class-card">
+            <!-- Empty state when no classes -->
+            <div v-if="formData.classFlights.length === 0" class="empty-class-state">
+              <i class="bi bi-layers"></i>
+              <p>No class configuration yet. Click "Add Class" to add a class.</p>
+            </div>
+
+            <!-- Class cards -->
+            <div 
+              v-for="(classItem, index) in formData.classFlights" 
+              :key="`class-${index}-${classItem.classType}`" 
+              :class="['class-card', { 'new-class': !classItem.id }]"
+            >
               <div class="class-header">
-                <div class="class-number">Class {{ index + 1 }}</div>
+                <div class="class-number">
+                  <span :class="['class-badge', getClassBadgeStyle(classItem.classType)]">
+                    {{ getClassName(classItem.classType) }}
+                  </span>
+                  <span v-if="!classItem.id" class="new-badge">NEW</span>
+                </div>
                 <button type="button" class="btn-remove-class" @click="removeClass(index)">
                   <i class="bi bi-trash"></i> Remove
                 </button>
@@ -185,17 +201,28 @@
               <div class="row">
                 <div class="col-md-4">
                   <label class="form-label">Class Type *</label>
-                  <select v-model.number="classItem.classType" class="form-select" required>
+                  <select 
+                    v-model.number="classItem.classType" 
+                    class="form-select" 
+                    required
+                    :disabled="classItem.id !== null"
+                  >
                     <option :value="1">Economy</option>
                     <option :value="2">Business</option>
                     <option :value="3">First Class</option>
                   </select>
+                  <small v-if="classItem.id" class="text-muted">
+                    <i class="bi bi-lock"></i> Class type cannot be changed for existing classes
+                  </small>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Seat Capacity *</label>
                   <input v-model.number="classItem.seatCapacity" type="number" class="form-control" min="1" required />
                   <small v-if="classItem.id" class="text-muted">
-                    Available: {{ getAvailableSeats(classItem) }} seats
+                    <i class="bi bi-info-circle"></i> Available: {{ getAvailableSeats(classItem) }} seats
+                  </small>
+                  <small v-else class="text-success">
+                    <i class="bi bi-plus-circle"></i> New seats will be created
                   </small>
                 </div>
                 <div class="col-md-4">
@@ -204,21 +231,40 @@
                   <small class="text-muted">Estimated: Rp {{ formatPrice(classItem.price) }}</small>
                 </div>
               </div>
-              <div v-if="classItem.id" class="row mt-2">
+              <div class="row mt-2">
                 <div class="col-12">
-                  <small class="text-muted">
-                    <strong>CLASS:</strong> {{ getClassName(classItem.classType) }} |
-                    <strong>CAPACITY:</strong> {{ classItem.seatCapacity }} seats |
-                    <strong>PRICE:</strong> Rp {{ formatPrice(classItem.price) }}
-                  </small>
+                  <div :class="['class-summary', { 'existing-class': classItem.id, 'new-class-summary': !classItem.id }]">
+                    <span v-if="classItem.id">
+                      <i class="bi bi-check-circle"></i> Existing class - 
+                      <strong>{{ classItem.seatCapacity }}</strong> seats at 
+                      <strong>Rp {{ formatPrice(classItem.price) }}</strong>
+                    </span>
+                    <span v-else>
+                      <i class="bi bi-plus-circle"></i> New class will be created - 
+                      <strong>{{ classItem.seatCapacity }}</strong> seats at 
+                      <strong>Rp {{ formatPrice(classItem.price) }}</strong>
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <button type="button" class="btn-add-class" @click="addNewClass">
+          <!-- Add Class Button -->
+          <button 
+            type="button" 
+            class="btn-add-class" 
+            @click="addNewClass"
+            :disabled="formData.classFlights.length >= 3"
+          >
             <i class="bi bi-plus-circle"></i> Add Class
+            <span v-if="formData.classFlights.length >= 3" class="ms-2">(Max 3 classes)</span>
           </button>
+
+          <!-- Class count indicator -->
+          <div class="class-count-indicator">
+            <span>{{ formData.classFlights.length }} / 3 classes configured</span>
+          </div>
         </div>
 
         <!-- Action Buttons -->
@@ -312,13 +358,33 @@ const formatDateTimeLocal = (date: Date): string => {
 }
 
 const addNewClass = () => {
+  // Find available class type (not already used)
+  const usedClassTypes = formData.value.classFlights.map(cf => cf.classType)
+  let availableClassType = 1
+  
+  if (!usedClassTypes.includes(1)) {
+    availableClassType = 1 // Economy
+  } else if (!usedClassTypes.includes(2)) {
+    availableClassType = 2 // Business
+  } else if (!usedClassTypes.includes(3)) {
+    availableClassType = 3 // First Class
+  } else {
+    showAlert('warning', 'All class types (Economy, Business, First Class) are already added')
+    return
+  }
+
   const newClass: ClassFlightUpdate = {
     id: null,
-    classType: 1,
-    seatCapacity: 150,
-    price: 500000
+    classType: availableClassType,
+    seatCapacity: availableClassType === 1 ? 150 : availableClassType === 2 ? 30 : 10,
+    price: availableClassType === 1 ? 500000 : availableClassType === 2 ? 1500000 : 3000000
   }
+  
+  // Push new class to array
   formData.value.classFlights.push(newClass)
+  
+  // Show success message
+  showAlert('success', `New ${getClassName(availableClassType)} class added successfully!`)
 }
 
 const removeClass = (index: number) => {
@@ -346,6 +412,15 @@ const getClassName = (classType: number): string => {
     3: 'First Class'
   }
   return classMap[classType] || 'Unknown'
+}
+
+const getClassBadgeStyle = (classType: number): string => {
+  const styleMap: Record<number, string> = {
+    1: 'economy-badge',
+    2: 'business-badge',
+    3: 'first-badge'
+  }
+  return styleMap[classType] || 'economy-badge'
 }
 
 const formatPrice = (price: number): string => {
@@ -561,6 +636,22 @@ onMounted(() => {
   padding: 1.5rem;
   margin-bottom: 1rem;
   position: relative;
+  transition: all 0.3s ease;
+}
+
+.class-card.new-class {
+  border-color: var(--success-color);
+  background: linear-gradient(to right, rgba(16, 185, 129, 0.05), rgba(16, 185, 129, 0.02));
+  animation: pulse-border 2s infinite;
+}
+
+@keyframes pulse-border {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+  }
 }
 
 .class-header {
@@ -571,9 +662,89 @@ onMounted(() => {
 }
 
 .class-number {
-  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.class-badge {
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.economy-badge {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.business-badge {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.first-badge {
+  background: #fce7f3;
+  color: #be185d;
+}
+
+.new-badge {
+  background: var(--success-color);
+  color: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
   font-weight: bold;
-  color: var(--primary-color);
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.empty-class-state {
+  background: #f3f4f6;
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  color: #6b7280;
+  margin-bottom: 1rem;
+}
+
+.empty-class-state i {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.class-summary {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.class-summary.existing-class {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.class-summary.new-class-summary {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.class-count-indicator {
+  text-align: center;
+  margin-top: 0.75rem;
+  color: #6b7280;
+  font-size: 0.9rem;
 }
 
 .btn-remove-class {
@@ -605,8 +776,14 @@ onMounted(() => {
   cursor: pointer;
 }
 
-.btn-add-class:hover {
+.btn-add-class:hover:not(:disabled) {
   background: #059669;
+}
+
+.btn-add-class:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .action-buttons {

@@ -1,5 +1,3 @@
-<!-- eslint-disable @typescript-eslint/no-explicit-any -->
-<!-- eslint-disable @typescript-eslint/no-explicit-any -->
 <template>
   <div class="container">
     <!-- Navbar -->
@@ -8,10 +6,16 @@
         ✈️ Flight Management
       </div>
       <div class="nav-links">
-        <router-link to="/">Home</router-link>
-        <router-link to="/airplanes">Airplanes</router-link>
+        <router-link v-if="authStore.canAccessHome" to="/">Home</router-link>
+        <router-link v-if="authStore.canAccessAirplanes" to="/airplanes">Airplanes</router-link>
         <router-link to="/flights">Flights</router-link>
         <router-link to="/bookings" class="active">Flight Bookings</router-link>
+        <router-link v-if="authStore.canAccessStatistics" to="/statistics">📊 Statistics</router-link>
+        <router-link to="/tickets">🎫 Support</router-link>
+        <div class="user-section" v-if="authStore.isAuthenticated">
+          <span class="user-role">{{ authStore.user?.role }}</span>
+          <button @click="handleLogout" class="btn-logout">Logout</button>
+        </div>
       </div>
     </nav>
 
@@ -118,7 +122,7 @@
 
           <div class="form-grid">
             <div class="form-group">
-              <label class="form-label">Email Address</label>
+              <label class="form-label">Email Address *</label>
               <input
                 v-model="contactEmail"
                 type="email"
@@ -128,7 +132,7 @@
               >
             </div>
             <div class="form-group">
-              <label class="form-label">Phone Number</label>
+              <label class="form-label">Phone Number *</label>
               <input
                 v-model="contactPhone"
                 type="tel"
@@ -163,41 +167,81 @@
           <p class="text-center text-muted">Maximum {{ maxPassengers }} passengers per booking</p>
         </div>
 
-        <!-- Step 3: Select Passengers & Seats -->
+        <!-- Step 3: Passenger Details & Seat Selection -->
         <div v-show="currentStep === 3" class="step-content">
-          <h4 class="step-title">✅ Select Passengers & Seats</h4>
+          <h4 class="step-title">✅ Enter Passenger Details</h4>
           <div class="passenger-list">
             <div
-              v-for="(passenger, index) in passengerSelections"
+              v-for="(passenger, index) in passengerForms"
               :key="index"
               class="passenger-item"
             >
               <div class="passenger-header">Passenger {{ index + 1 }}</div>
+
+              <!-- Full Name -->
+              <div class="form-group">
+                <label class="form-label">Full Name *</label>
+                <input
+                  v-model="passenger.fullName"
+                  type="text"
+                  class="form-control"
+                  placeholder="John Doe"
+                  required
+                >
+              </div>
+
               <div class="form-grid">
+                <!-- Birth Date -->
                 <div class="form-group">
-                  <label class="form-label">Select Passenger</label>
-                  <select
-                    v-model="passenger.passengerId"
+                  <label class="form-label">Birth Date *</label>
+                  <input
+                    v-model="passenger.birthDate"
+                    type="date"
                     class="form-control"
-                    @change="onPassengerChange(index)"
+                    :max="maxBirthDate"
                     required
                   >
-                    <option value="">Choose passenger...</option>
+                </div>
+
+                <!-- Gender -->
+                <div class="form-group">
+                  <label class="form-label">Gender *</label>
+                  <select
+                    v-model.number="passenger.gender"
+                    class="form-control"
+                    required
+                  >
+                    <option :value="0" disabled>Select gender...</option>
                     <option
-                      v-for="p in availablePassengers"
-                      :key="p.id"
-                      :value="p.id"
+                      v-for="option in genderOptions"
+                      :key="option.value"
+                      :value="option.value"
                     >
-                      {{ p.fullName }} ({{ p.genderText }})
+                      {{ option.label }}
                     </option>
                   </select>
                 </div>
+              </div>
+
+              <div class="form-grid">
+                <!-- ID/Passport -->
                 <div class="form-group">
-                  <label class="form-label">Select Seat</label>
+                  <label class="form-label">ID / Passport Number *</label>
+                  <input
+                    v-model="passenger.idPassport"
+                    type="text"
+                    class="form-control"
+                    placeholder="3201234567890123"
+                    required
+                  >
+                </div>
+
+                <!-- Seat Selection -->
+                <div class="form-group">
+                  <label class="form-label">Select Seat *</label>
                   <select
                     v-model="passenger.seatCode"
                     class="form-control"
-                    :disabled="!passenger.passengerId"
                     required
                   >
                     <option value="">Choose seat...</option>
@@ -259,14 +303,30 @@
           <div class="summary-section">
             <div class="summary-title">Passengers & Seats</div>
             <div
-              v-for="(passenger, index) in passengerSelections"
+              v-for="(passenger, index) in passengerForms"
               :key="index"
-              class="summary-row"
+              class="passenger-summary-card"
             >
-              <span class="summary-label">Passenger {{ index + 1 }}</span>
-              <span class="summary-value">
-                {{ getPassengerName(passenger.passengerId) }} - Seat {{ getSeatShort(passenger.seatCode) }}
-              </span>
+              <div class="summary-row">
+                <span class="summary-label">Passenger {{ index + 1 }}</span>
+                <span class="summary-value">{{ passenger.fullName }}</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">Birth Date</span>
+                <span class="summary-value">{{ formatDate(passenger.birthDate) }}</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">Gender</span>
+                <span class="summary-value">{{ getGenderText(passenger.gender) }}</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">ID/Passport</span>
+                <span class="summary-value">{{ passenger.idPassport }}</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">Seat</span>
+                <span class="summary-value">{{ getSeatShort(passenger.seatCode) }}</span>
+              </div>
             </div>
           </div>
 
@@ -337,20 +397,50 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
-import type { BookingRequest, BookingResponse } from '@/interfaces/booking.interface'
+import { useAuthStore } from '@/stores/auth/authStore'
+import type {
+  BookingRequest,
+  BookingResponse,
+  SeatAvailability,
+  FlightDetail,
+  ClassFlight,
+  PassengerCreateData
+} from '@/interfaces/booking.interface'
+
+// ✅ API Base URL
+const API_BASE_URL = 'http://2306209681-be.hafizmuh.site/api'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 
-// API Base URL
-const API_BASE_URL = 'http://2306209681-be.hafizmuh.site/api'
-// State
+// Logout handler
+const handleLogout = () => {
+  authStore.logout()
+  router.push('/login')
+}
+
+// ========================================================================
+// INTERFACES (Local to component)
+// ========================================================================
+
+interface PassengerForm {
+  fullName: string
+  birthDate: string
+  gender: number  // 0 = not selected, 1 = Male, 2 = Female, 3 = Other
+  idPassport: string
+  seatCode: string
+}
+
+// ========================================================================
+// STATE
+// ========================================================================
+
 const loading = ref(true)
 const errorMessage = ref('')
 const currentStep = ref(1)
-const flightData = ref<any>(null)
-const availablePassengers = ref<any[]>([])
-const availableSeatsData = ref<any[]>([])
+const flightData = ref<FlightDetail | null>(null)
+const availableSeatsData = ref<SeatAvailability[]>([])
 const submitting = ref(false)
 const showSuccessModal = ref(false)
 const bookingResult = ref<BookingResponse | null>(null)
@@ -363,19 +453,37 @@ const availableSeatsCount = ref(0)
 const contactEmail = ref('')
 const contactPhone = ref('')
 const passengerCount = ref(1)
-const passengerSelections = ref<Array<{ passengerId: string; seatCode: string }>>([
-  { passengerId: '', seatCode: '' }
+
+// Passenger forms
+const passengerForms = ref<PassengerForm[]>([
+  {
+    fullName: '',
+    birthDate: '',
+    gender: 0,
+    idPassport: '',
+    seatCode: ''
+  }
 ])
+
+// Gender options
+const genderOptions = [
+  { value: 1, label: 'Male' },
+  { value: 2, label: 'Female' },
+  { value: 3, label: 'Other' }
+]
 
 // Steps
 const steps = [
   { number: 1, label: 'Select Class' },
   { number: 2, label: 'Contact Info' },
-  { number: 3, label: 'Select Passengers' },
+  { number: 3, label: 'Passenger Details' },
   { number: 4, label: 'Confirmation' }
 ]
 
-// Computed
+// ========================================================================
+// COMPUTED
+// ========================================================================
+
 const maxPassengers = computed(() => {
   return availableSeatsCount.value > 0 ? Math.min(10, availableSeatsCount.value) : 10
 })
@@ -384,26 +492,28 @@ const totalPrice = computed(() => {
   return selectedClassPrice.value * passengerCount.value
 })
 
-// Methods
+const maxBirthDate = computed(() => {
+  // Maximum date: today (can't be born in the future)
+  return new Date().toISOString().split('T')[0]
+})
+
+// ========================================================================
+// METHODS - LOAD DATA
+// ========================================================================
+
 const loadFlightInfo = async () => {
   try {
     const flightId = route.params.id as string
-    const response = await axios.get(`${API_BASE_URL}/bookings/flight-info/${flightId}`)
+    // ✅ UPDATED: Use axios directly instead of apiClient
+    const response = await axios.get<FlightDetail>(
+      `${API_BASE_URL}/bookings/flight-info/${flightId}`
+    )
     flightData.value = response.data
   } catch (error: any) {
     console.error('Error loading flight:', error)
-    errorMessage.value = 'Failed to load flight information'
+    errorMessage.value = error.response?.data?.error || error.response?.data?.message || 'Failed to load flight information'
   } finally {
     loading.value = false
-  }
-}
-
-const loadAvailablePassengers = async () => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/bookings/available-passengers`)
-    availablePassengers.value = response.data
-  } catch (error) {
-    console.error('Error loading passengers:', error)
   }
 }
 
@@ -411,14 +521,22 @@ const loadAvailableSeats = async () => {
   if (!selectedClassFlightId.value) return
 
   try {
-    const response = await axios.get(`${API_BASE_URL}/bookings/available-seats/${selectedClassFlightId.value}`)
+    // ✅ UPDATED: Use axios directly instead of apiClient
+    const response = await axios.get<SeatAvailability[]>(
+      `${API_BASE_URL}/bookings/available-seats/${selectedClassFlightId.value}`
+    )
     availableSeatsData.value = response.data
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error loading seats:', error)
+    errorMessage.value = error.response?.data?.error || error.response?.data?.message || 'Failed to load available seats'
   }
 }
 
-const selectClass = (classFlight: any) => {
+// ========================================================================
+// METHODS - FORM ACTIONS
+// ========================================================================
+
+const selectClass = (classFlight: ClassFlight) => {
   selectedClassFlightId.value = classFlight.id
   selectedClassName.value = classFlight.className
   selectedClassPrice.value = classFlight.price
@@ -428,31 +546,29 @@ const selectClass = (classFlight: any) => {
 const decreasePassenger = () => {
   if (passengerCount.value > 1) {
     passengerCount.value--
-    passengerSelections.value.pop()
+    passengerForms.value.pop()
   }
 }
 
 const increasePassenger = () => {
   if (passengerCount.value < maxPassengers.value) {
     passengerCount.value++
-    passengerSelections.value.push({ passengerId: '', seatCode: '' })
+    passengerForms.value.push({
+      fullName: '',
+      birthDate: '',
+      gender: 0,
+      idPassport: '',
+      seatCode: ''
+    })
   }
 }
 
-const onPassengerChange = (index: number) => {
-  // Reset seat selection when passenger changes
-  const passenger = passengerSelections.value[index]
-  if (passenger) {
-    passenger.seatCode = ''
-  }
-}
-
-const getAvailableSeatsForPassenger = (index: number) => {
-  const selectedSeats = passengerSelections.value
+const getAvailableSeatsForPassenger = (index: number): SeatAvailability[] => {
+  const selectedSeats = passengerForms.value
     .map(p => p.seatCode)
     .filter(s => s !== '')
 
-  const currentPassenger = passengerSelections.value[index]
+  const currentPassenger = passengerForms.value[index]
   if (!currentPassenger) return []
 
   return availableSeatsData.value.filter(seat =>
@@ -461,15 +577,20 @@ const getAvailableSeatsForPassenger = (index: number) => {
   )
 }
 
-const getPassengerName = (passengerId: string) => {
-  const passenger = availablePassengers.value.find(p => p.id === passengerId)
-  return passenger?.fullName || 'Unknown'
-}
-
-const getSeatShort = (seatCode: string) => {
+const getSeatShort = (seatCode: string): string => {
   if (!seatCode) return ''
   return seatCode.substring(seatCode.lastIndexOf('-') + 1)
 }
+
+const getGenderText = (gender: number): string => {
+  if (gender === 0) return 'Not specified'
+  const option = genderOptions.find(o => o.value === gender)
+  return option?.label || 'Unknown'
+}
+
+// ========================================================================
+// METHODS - VALIDATION & NAVIGATION
+// ========================================================================
 
 const validateStep = async (step: number): Promise<boolean> => {
   errorMessage.value = ''
@@ -494,9 +615,26 @@ const validateStep = async (step: number): Promise<boolean> => {
       return true
 
     case 3:
-      for (const passenger of passengerSelections.value) {
-        if (!passenger.passengerId || !passenger.seatCode) {
-          errorMessage.value = 'Please select passenger and seat for all travelers'
+      for (let i = 0; i < passengerForms.value.length; i++) {
+        const p = passengerForms.value[i]
+        if (!p || !p.fullName.trim()) {
+          errorMessage.value = `Please enter full name for Passenger ${i + 1}`
+          return false
+        }
+        if (!p.birthDate) {
+          errorMessage.value = `Please enter birth date for Passenger ${i + 1}`
+          return false
+        }
+        if (!p.gender || p.gender === 0) {
+          errorMessage.value = `Please select gender for Passenger ${i + 1}`
+          return false
+        }
+        if (!p.idPassport.trim()) {
+          errorMessage.value = `Please enter ID/Passport for Passenger ${i + 1}`
+          return false
+        }
+        if (!p.seatCode) {
+          errorMessage.value = `Please select seat for Passenger ${i + 1}`
           return false
         }
       }
@@ -530,34 +668,55 @@ const previousStep = () => {
   }
 }
 
+// ========================================================================
+// METHODS - SUBMIT BOOKING
+// ========================================================================
+
 const submitBooking = async () => {
   try {
     submitting.value = true
 
+    // Convert passenger forms to API format
+    const passengers: PassengerCreateData[] = passengerForms.value.map(p => ({
+      fullName: p.fullName.trim(),
+      birthDate: p.birthDate,
+      gender: p.gender,
+      idPassport: p.idPassport.trim(),
+      seatCode: p.seatCode
+    }))
+
     const bookingData: BookingRequest = {
       flightId: route.params.id as string,
-      classFlightId: selectedClassFlightId.value!,
-      contactEmail: contactEmail.value,
-      contactPhone: contactPhone.value,
+      classFlightId: selectedClassFlightId.value as number,
+      contactEmail: contactEmail.value.trim(),
+      contactPhone: contactPhone.value.trim(),
       passengerCount: passengerCount.value,
-      passengers: passengerSelections.value.map(p => ({
-        passengerId: p.passengerId,
-        seatCode: p.seatCode
-      }))
+      passengers: passengers
     }
 
-    const response = await axios.post(`${API_BASE_URL}/bookings/create`, bookingData)
+    console.log('Submitting booking:', bookingData)
+
+    // ✅ UPDATED: Use axios directly instead of apiClient
+    const response = await axios.post<BookingResponse>(
+      `${API_BASE_URL}/bookings/create`,
+      bookingData
+    )
+
     bookingResult.value = response.data
     showSuccessModal.value = true
 
   } catch (error: any) {
     console.error('Error creating booking:', error)
-    errorMessage.value = error.response?.data?.error || 'Failed to create booking'
+    errorMessage.value = error.response?.data?.error || error.response?.data?.message || 'Failed to create booking. Please try again.'
     window.scrollTo({ top: 0, behavior: 'smooth' })
   } finally {
     submitting.value = false
   }
 }
+
+// ========================================================================
+// METHODS - MODAL & NAVIGATION
+// ========================================================================
 
 const closeSuccessModal = () => {
   showSuccessModal.value = false
@@ -567,7 +726,11 @@ const goToBookings = () => {
   router.push('/bookings')
 }
 
-const formatDateTime = (dateTimeString?: string) => {
+// ========================================================================
+// METHODS - FORMATTING
+// ========================================================================
+
+const formatDateTime = (dateTimeString?: string): string => {
   if (!dateTimeString) return '-'
   const date = new Date(dateTimeString)
   return date.toLocaleDateString('en-GB', {
@@ -579,20 +742,31 @@ const formatDateTime = (dateTimeString?: string) => {
   })
 }
 
-const formatPrice = (price: number) => {
+const formatDate = (dateString: string): string => {
+  if (!dateString) return '-'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  })
+}
+
+const formatPrice = (price: number): string => {
   return new Intl.NumberFormat('id-ID').format(price)
 }
 
-// Lifecycle
+// ========================================================================
+// LIFECYCLE
+// ========================================================================
+
 onMounted(async () => {
-  await Promise.all([
-    loadFlightInfo(),
-    loadAvailablePassengers()
-  ])
+  await loadFlightInfo()
 })
 </script>
 
 <style scoped>
+/* Same styles as before - keeping all the existing CSS */
 * {
   margin: 0;
   padding: 0;
@@ -640,6 +814,41 @@ onMounted(async () => {
 .nav-links a:hover,
 .nav-links a.active {
   background: rgba(255, 255, 255, 0.2);
+}
+
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 15px;
+  padding-left: 15px;
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.user-role {
+  color: white;
+  font-size: 0.75rem;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.btn-logout {
+  background: rgba(239, 68, 68, 0.8);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.btn-logout:hover {
+  background: #ef4444;
+  transform: translateY(-1px);
 }
 
 /* Breadcrumb */
@@ -1066,6 +1275,18 @@ onMounted(async () => {
 .summary-value {
   font-weight: 600;
   color: #111827;
+}
+
+.passenger-summary-card {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border: 1px solid #e5e7eb;
+}
+
+.passenger-summary-card .summary-row {
+  padding: 0.5rem 0;
 }
 
 /* Total Price */
